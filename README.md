@@ -1,2 +1,2 @@
-# odoo
-odoo hackathon
+# odoo X adani
+odoo X adani hackathon
