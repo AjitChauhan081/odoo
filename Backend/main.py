@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Path, HTTPException, Query, Depends, status
 from fastapi.responses import JSONResponse
 import json
-from pydantic import BaseModel,computed_field, Field
+from pydantic import BaseModel,computed_field, Field, EmailStr
 from typing import Annotated,Literal,Optional
 from sqlalchemy import create_engine, Column, Integer, String
 import sqlalchemy
@@ -12,6 +12,16 @@ import models, database
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
+
+class Signup(BaseModel):
+    name: Annotated[str,Field(...,description='Name Of User',examples= ['Ajit Chauhan',"Utsav Laheru"])]
+    email: Annotated[EmailStr,Field(...,description='Email of User',examples=['Ajit@gmail.com',"Utsav@gmail.com"])]
+    password: Annotated[str,Field(...,description='Password Of User',examples=['Ajit@1234'])]
+
+class Login(BaseModel):
+    email: Annotated[EmailStr,Field(...,description='Email of User',examples=['Ajit@gmail.com',"Utsav@gmail.com"])]
+    password: Annotated[str,Field(...,description='Password Of User',examples=['Ajit@1234'])]
+
 
 def get_db():
     db = database.SessionLocal()
@@ -24,12 +34,12 @@ def get_db():
 app= FastAPI()
 
 @app.post('/signup/')
-def create_user(name: str, email: str, pas: str, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == email).first()
+def create_user(sign:Signup, db: Session = Depends(get_db)):
+    existing_user = db.query(models.User).filter(models.User.email == sign.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_user = models.User(name=name, email=email, password=pas) 
+    new_user = models.User(name=sign.name, email=sign.email, password=sign.password) 
     
     try:
         db.add(new_user)
@@ -47,8 +57,8 @@ def create_user(name: str, email: str, pas: str, db: Session = Depends(get_db)):
 
 
 @app.post('/login/')
-def fetch_user(email: str, pas: str, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == email).first()
+def fetch_user(login:Login, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == login.email).first()
 
     if not user:
         raise HTTPException(
@@ -56,17 +66,17 @@ def fetch_user(email: str, pas: str, db: Session = Depends(get_db)):
             detail="User does not exist"
         )
 
-    if user.password != pas:
+    if user.password != login.password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Invalid password"
         )
 
-    return {
+    return JSONResponse(status_code=200,content={
         "name": user.name,
         "email": user.email,
         "message": "Login successful"
-    }
+    })
     
 @app.get('/view/')
 def view(db: Session = Depends(get_db)):
