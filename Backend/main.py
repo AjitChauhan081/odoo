@@ -8,7 +8,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.orm import Session
 import models, database
-from models import Equipment
+from models import Equipment,RequestForm
 from datetime import datetime
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -45,56 +45,6 @@ def get_db():
 
 
 app= FastAPI()
-
-@app.post('/signup/')
-def create_user(sign:Signup, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == sign.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    new_user = models.User(name=sign.name, email=sign.email, password=sign.password) 
-    
-    try:
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Database error")
-    return {
-        "id": new_user.id,
-        "name": new_user.name,
-        "email": new_user.email,
-        "message": "User created successfully"
-    }
-
-
-@app.post('/login/')
-def fetch_user(login:Login, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == login.email).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="User does not exist"
-        )
-
-    if user.password != login.password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Invalid password"
-        )
-
-    token = create_access_token(data={"sub": user.email})
-    # response.set_cookie(key="access_token", value=token, httponly=True)
-    
-    return {
-        "access_token": token, 
-        "token_type": "bearer",
-        "name": user.name,
-        "email": user.email,
-        "message": "Login successful"
-    }
     
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/")
 @app.get("/dashboard")
@@ -148,3 +98,40 @@ def create_equipment(equipment_name: str,serial_number: str,company: str,purchas
 
     return new_equipment
     
+@app.post('/requestform/')
+def create_requestform(created_by:str, maintenance_for:str, equipment:str, category:str, 
+    request_date:str, maintenance_type:str, team:str, technician:str, scheduled_date:str, 
+    duration:str, priority:int, company:str, db: Session = Depends(get_db)):
+
+    #Prasing The DateTime to DD-MM-YYYY
+    try:
+        parsed_date = datetime.strptime(request_date, "%d-%m-%Y")
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="purchase_date must be in DD-MM-YYYY format (e.g. 01-12-2025)"
+        )
+
+    new_requestform = RequestForm(
+        Created_By = created_by,
+        Maintenance_For = maintenance_for,
+        Equipment = equipment,
+        Category = category,
+        Request_Date = parsed_date,
+        Maintenance_Type = maintenance_type,
+
+        #Maintance Info
+        Team = team,
+        technician = technician,
+        Scheduled_Date = scheduled_date,
+        Duration = duration,
+        Priority = priority,
+        Company = company
+
+    )
+    db.add(new_requestform)
+    db.commit()
+    db.refresh(new_requestform)
+    
+    return new_requestform
+
