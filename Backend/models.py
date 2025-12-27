@@ -3,11 +3,11 @@ from sqlalchemy import String
 from datetime import date
 from sqlalchemy import Date
 from database import Base
+from datetime import date
 
 class User(Base):
     __tablename__ = "user"
 
-    # Mapped and mapped_column provide better type hinting
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column()
     email: Mapped[str] = mapped_column(String(255),unique=True, index=True)
@@ -16,11 +16,12 @@ class User(Base):
 
 
 class MaintenanceTeam(Base):
-    __tablename__="Maintance Team"
+    __tablename__ = "maintenance_team" # Fixed typo [cite: 20]
     id: Mapped[int] = mapped_column(primary_key=True, index=True)    
-    team_name: Mapped[str] = mapped_column(unique=True, index=True)
-    team_member_name: Mapped[str] = mapped_column()
-    workflow_logic: Mapped[str] = mapped_column()
+    team_name: Mapped[str] = mapped_column(unique=True, index=True) # e.g., IT, Mechanics [cite: 22]
+    # Link specific users (technicians) to teams [cite: 23]
+    manager_id: Mapped[int] = mapped_column(ForeignKey("user.id")) 
+  
     
 
 class Equipment(Base):

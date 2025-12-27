@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Path, HTTPException, Query, Depends, status
+from fastapi import FastAPI, Path, HTTPException, Query, Depends, status,Response
 from fastapi.responses import JSONResponse
 import json
-from pydantic import BaseModel,computed_field, Field
+from pydantic import BaseModel,computed_field, Field, EmailStr
 from typing import Annotated,Literal,Optional
 from sqlalchemy import create_engine, Column, Integer, String
 import sqlalchemy
@@ -13,7 +13,28 @@ from datetime import datetime
 
 models.Base.metadata.create_all(bind=database.engine)
 
+SECRET_KEY = "SecretCodethatcantbebreak"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
 app = FastAPI()
+
+class Signup(BaseModel):
+    name: Annotated[str,Field(...,description='Name Of User',examples= ['Ajit Chauhan',"Utsav Laheru"])]
+    email: Annotated[EmailStr,Field(...,description='Email of User',examples=['Ajit@gmail.com',"Utsav@gmail.com"])]
+    password: Annotated[str,Field(...,description='Password Of User',examples=['Ajit@1234'])]
+
+class Login(BaseModel):
+    email: Annotated[EmailStr,Field(...,description='Email of User',examples=['Ajit@gmail.com',"Utsav@gmail.com"])]
+    password: Annotated[str,Field(...,description='Password Of User',examples=['Ajit@1234'])]
+
 
 def get_db():
     db = database.SessionLocal()
@@ -26,12 +47,12 @@ def get_db():
 app= FastAPI()
 
 @app.post('/signup/')
-def create_user(name: str, email: str, pas: str, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == email).first()
+def create_user(sign:Signup, db: Session = Depends(get_db)):
+    existing_user = db.query(models.User).filter(models.User.email == sign.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_user = models.User(name=name, email=email, password=pas) 
+    new_user = models.User(name=sign.name, email=sign.email, password=sign.password) 
     
     try:
         db.add(new_user)
@@ -49,8 +70,8 @@ def create_user(name: str, email: str, pas: str, db: Session = Depends(get_db)):
 
 
 @app.post('/login/')
-def fetch_user(email: str, pas: str, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == email).first()
+def fetch_user(login:Login, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == login.email).first()
 
     if not user:
         raise HTTPException(
@@ -58,17 +79,36 @@ def fetch_user(email: str, pas: str, db: Session = Depends(get_db)):
             detail="User does not exist"
         )
 
-    if user.password != pas:
+    if user.password != login.password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Invalid password"
         )
 
+    token = create_access_token(data={"sub": user.email})
+    # response.set_cookie(key="access_token", value=token, httponly=True)
+    
     return {
+        "access_token": token, 
+        "token_type": "bearer",
         "name": user.name,
         "email": user.email,
         "message": "Login successful"
     }
+    
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/")
+@app.get("/dashboard")
+def get_dashboard(token: str = Depends(oauth2_scheme)):
+    try:
+        # Verify the token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {"message": f"Welcome, {email}!"}
+    except:
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
+    
     
 @app.get('/view/')
 def view(db: Session = Depends(get_db)):
