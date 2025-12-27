@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment Management - GearGuard</title>
+    <style>
+        /* CSS Variables for Calm Office Theme */
+        :root {
+            --bg-color: #f1f5f9; 
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b; 
+            --text-secondary: #64748b;
+            --accent-color: #6366f1; 
+            --accent-soft: rgba(99, 102, 241, 0.08);
+            --success-color: #10b981;
+            --row-hover: #f8fafc;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03);
+            --transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            /* Improved Background: Subtle Gradient + Professional Dot Pattern */
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
+                radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
+            background-size: 100% 100%, 100% 100%, 24px 24px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout Container */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        /* Header Section */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 20px 28px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-new {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-new:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-container input {
+            padding: 10px 14px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 0.875rem;
+            width: 280px;
+            outline: none;
+            transition: var(--transition);
+            background: var(--surface-color);
+        }
+
+        .search-container input:focus {
+            border-color: var(--accent-color);
+            width: 340px;
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 0 28px;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            gap: 32px;
+        }
+
+        .tab {
+            padding: 16px 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        /* Table Section */
+        .table-container {
+            background: var(--surface-color);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            box-shadow: var(--shadow-subtle);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            padding: 16px 24px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #fbfcfd;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 18px 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: var(--row-hover);
+        }
+
+        .serial-no {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 3px 8px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+
+        /* Form Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            width: 960px;
+            max-width: 95%;
+            border-radius: 20px;
+            box-shadow: 0 25px 70px -12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: formFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-content.narrow {
+            width: 520px;
+        }
+
+        @keyframes formFade {
+            from { transform: translateY(20px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 32px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        /* Two Column Layout */
+        .form-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .form-layout.single-col {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .form-section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .required::after {
+            content: "*";
+            color: var(--accent-color);
+            margin-left: 4px;
+        }
+
+        input, select, textarea {
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+            background: #ffffff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        .modal-footer {
+            padding: 24px 32px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #fafbfc;
+        }
+
+        .btn-cancel {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 24px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        /* Status Toggle */
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 22px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--success-color); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .btn-action {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        .btn-action:hover {
+            color: var(--accent-color);
+            background: var(--accent-soft);
+        }
+
+        @media (max-width: 900px) {
+            .form-layout { grid-template-columns: 1fr; gap: 20px; }
+            .modal-content { width: 95%; }
+            .app-container { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="header-left">
+            <h1 id="pageTitle">Equipment / <span style="color: var(--text-primary); font-weight: 600;">Assets</span></h1>
+            <button class="btn-new" id="openModalBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New
+            </button>
+        </div>
+        <div class="header-right">
+            <div class="search-container">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="tableSearch" placeholder="Search...">
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Maintenance</span>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="tab active" data-view="assets">Assets</div>
+        <div class="tab" data-view="categories">Categories</div>
+    </nav>
+
+    <div class="table-container">
+        <table id="mainTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+        <div class="modal-header">
+            <div>
+                <h2 id="modalTitle" style="font-size: 1.15rem; font-weight: 600;">Create New</h2>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">Entry Details</p>
+            </div>
+            <button class="btn-action" id="closeModalBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <div class="modal-body" id="modalBody"></div>
+
+        <div class="modal-footer">
+            <button class="btn-cancel" id="cancelBtn">Discard</button>
+            <button class="btn-new" id="saveBtn">Save Entry</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://127.0.0.1:8000';
+    let currentView = 'assets';
+
+    // UI Elements
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const searchInput = document.getElementById('tableSearch');
+    const pageTitle = document.getElementById('pageTitle');
+    const tabs = document.querySelectorAll('.tab');
+    const modal = document.getElementById('modalOverlay');
+    const modalContent = document.getElementById('modalContent');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('modalTitle');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // Modal & UI Management - Updated to match all backend fields
+    function setupForm() {
+        if (currentView === 'assets') {
+            modalContent.className = 'modal-content';
+            modalTitle.textContent = "Create Equipment";
+            modalBody.innerHTML = `
+                <form id="activeForm">
+                    <div class="form-layout">
+                        <div class="column">
+                            <h3 class="form-section-title">Asset & Assignment</h3>
+                            <div class="form-group"><label class="required">Equipment Name</label><input type="text" id="val-name" placeholder="e.g. MSi Laptop" required></div>
+                            <div class="form-group"><label class="required">Serial Number</label><input type="text" id="val-serial" placeholder="e.g. 123WDAD" required></div>
+                            <div class="form-group"><label class="required">Company</label><input type="text" id="val-company" placeholder="e.g. Odoo Help" required></div>
+                            <div class="form-group"><label class="required">Used By (Employee)</label><input type="text" id="val-emp" placeholder="e.g. Mukhesh" required></div>
+                            <div class="form-group"><label class="required">Department</label><input type="text" id="val-dept" placeholder="e.g. IT Support" required></div>
+                        </div>
+                        <div class="column">
+                            <h3 class="form-section-title">Lifecycle & Location</h3>
+                            <div class="form-group"><label class="required">Purchase Date</label><input type="date" id="val-purchase" required></div>
+                            <div class="form-group"><label class="required">Assigned Date</label><input type="date" id="val-assigned" required></div>
+                            <div class="form-group"><label class="required">Warranty Info</label><input type="text" id="val-warranty" placeholder="e.g. 1 Year" required></div>
+                            <div class="form-group"><label class="required">Location</label><input type="text" id="val-location" placeholder="e.g. Junagadh" required></div>
+                            <div class="form-group"><label>Description</label><textarea id="val-desc" placeholder="Full description of the equipment..."></textarea></div>
+                            
+                            <input type="hidden" id="val-cat" value="1">
+                            <input type="hidden" id="val-tech" value="1">
+                            <input type="hidden" id="val-team" value="1">
+
+                            <div class="form-group"><label>Status</label><div class="status-row"><span style="font-size: 0.85rem; color: var(--text-secondary);">Is Usable</span><label class="switch"><input type="checkbox" id="val-status" checked><span class="slider"></span></label></div></div>
+                        </div>
+                    </div>
+                </form>`;
+        }
+    }
+
+    // API: Save New Equipment - Mapped to Equipment_validation schema
+    saveBtn.onclick = async () => {
+        if (currentView === 'assets') {
+            const payload = {
+                equipment_name: document.getElementById('val-name').value,
+                serial_number: document.getElementById('val-serial').value,
+                company: document.getElementById('val-company').value,
+                purchase_date: document.getElementById('val-purchase').value, // YYYY-MM-DD
+                assigned_date: document.getElementById('val-assigned').value, // YYYY-MM-DD
+                warranty_info: document.getElementById('val-warranty').value,
+                location: document.getElementById('val-location').value,
+                category_id: parseInt(document.getElementById('val-cat').value),
+                technician_id: parseInt(document.getElementById('val-tech').value),
+                team_id: parseInt(document.getElementById('val-team').value),
+                department: document.getElementById('val-dept').value,
+                is_usable: document.getElementById('val-status').checked,
+                used_by: document.getElementById('val-emp').value,
+                description: document.getElementById('val-desc').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/equipment/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("Success:", result);
+                    closeModal();
+                    renderTable();
+                } else {
+                    const error = await response.json();
+                    alert("Error: " + JSON.stringify(error.detail));
+                }
+            } catch (err) {
+                console.error("Network Error:", err);
+                alert("Could not connect to the backend server.");
+            }
+        }
+    };
+
+    // API: Load Data from Backend
+    async function renderTable() {
+        const term = searchInput.value.toLowerCase();
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        try {
+            if (currentView === 'assets') {
+                tableHead.innerHTML = `<tr><th>Equipment Name</th><th>Employee</th><th>Department</th><th>Serial Number</th><th>Technician</th><th>Status</th><th></th></tr>`;
+                
+                const response = await fetch(`${API_BASE_URL}/view_equipment/`);
+                const data = await response.json();
+
+                const filtered = data.filter(i => i.Equipment_name.toLowerCase().includes(term) || (i.Serial_number && i.Serial_number.toLowerCase().includes(term)));
+                
+                filtered.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="font-weight: 600;">${item.Equipment_name}</td>
+                        <td>${item.Used_by || '—'}</td>
+                        <td>${item.department || '—'}</td>
+                        <td><span class="serial-no">${item.Serial_number || 'N/A'}</span></td>
+                        <td style="color: var(--text-secondary);">Tech ID: ${item.technician_id}</td>
+                        <td><span style="background: ${item.is_usable ? '#f0fdf4' : '#fff1f2'}; color: ${item.is_usable ? '#16a34a' : '#e11d48'}; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                            ${item.is_usable ? 'OPERATIONAL' : 'SCRAPPED'}
+                        </span></td>
+                        <td style="text-align: right;"><button class="btn-action">···</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                // Categories Logic (Placeholder or secondary API)
+                tableHead.innerHTML = `<tr><th>Category Name</th><th>Responsible</th><th>Company</th><th></th></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Category API Integration Ready</td></tr>`;
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+        }
+    }
+
+    // API: Save New Equipment
+    saveBtn.onclick = async () => {
+        if (currentView === 'assets') {
+            const payload = {
+                equipment_name: document.getElementById('val-name').value,
+                serial_number: document.getElementById('val-serial').value,
+                company: "GearGuard Internal",
+                purchase_date: new Date().toISOString().split('T')[0],
+                assigned_date: new Date().toISOString().split('T')[0],
+                warranty_info: "1 Year Standard",
+                location: "Junagadh Office",
+                category_id: 1, 
+                technician_id: 1,
+                team_id: 1,
+                department: "IT Dept",
+                is_usable: document.getElementById('val-status').checked,
+                used_by: document.getElementById('val-emp').value,
+                description: document.getElementById('val-desc').value
+            };
+
+            const response = await fetch(`${API_BASE_URL}/equipment/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                closeModal();
+                renderTable();
+            } else {
+                alert("Failed to save equipment. Check console for details.");
+            }
+        }
+    };
+
+    // Modal & UI Management
+    
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentView = tab.dataset.view;
+            renderTable();
+        });
+    });
+
+    searchInput.addEventListener('input', renderTable);
+    document.getElementById('openModalBtn').onclick = () => { setupForm(); modal.style.display = 'flex'; };
+    const closeModal = () => modal.style.display = 'none';
+    document.getElementById('closeModalBtn').onclick = closeModal;
+    document.getElementById('cancelBtn').onclick = closeModal;
+    
+    window.onload = () => {
+        lucide.createIcons();
+        renderTable();
+    };
+</script>
+</body>
+</html>

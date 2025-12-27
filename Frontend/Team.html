@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearGuard Teams Management</title>
+    <style>
+        :root {
+            /* Refined Color Palette */
+            --bg-base: #f1f5f9;
+            --bg-gradient-1: rgba(219, 234, 254, 0.5); /* Soft Blue */
+            --bg-gradient-2: rgba(241, 245, 249, 0.8);
+            --surface-color: rgba(255, 255, 255, 0.95);
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #2563eb;
+            --accent-hover: #1d4ed8;
+            --row-hover: rgba(241, 245, 249, 0.6);
+            --danger: #ef4444;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --font-stack: 'Inter', -apple-system, system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-stack);
+            /* Awesome subtle mesh background */
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, var(--bg-gradient-1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(224, 231, 255, 0.5) 0, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(248, 250, 252, 1) 0, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        /* Header Area */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header-left h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Interactive Elements */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.7rem 1.4rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { 
+            background: var(--accent-primary); 
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover { 
+            background: var(--accent-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+        }
+        .btn-secondary { 
+            background: var(--surface-color); 
+            color: var(--text-main); 
+            border-color: var(--border-color);
+            backdrop-filter: blur(8px);
+        }
+        .btn-secondary:hover { background: #fff; transform: translateY(-1px); }
+
+        /* Search Enhancement */
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.7rem 1rem 0.7rem 2.8rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            outline: none;
+            background: var(--surface-color);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus { 
+            border-color: var(--accent-primary); 
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        /* Main Content Card */
+        .card {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: var(--shadow-premium);
+            overflow: hidden;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background: rgba(248, 250, 252, 0.5);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background-color: var(--row-hover); }
+
+        /* Content Styling */
+        .team-name { font-weight: 700; color: #1e293b; display: block; margin-bottom: 0.3rem; }
+        
+        .badge {
+            display: inline-flex;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+        .badge-internal { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+        .badge-external { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+        .badge-subcontractor { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+        .avatar-group { display: flex; align-items: center; }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px; /* Slightly squared for pro look */
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+            margin-left: -10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .avatar:first-child { margin-left: 0; }
+
+        /* Form Styling Upgrade */
+        .form-view {
+            display: none;
+            max-width: 750px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 3rem;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .form-group label { display: block; margin-bottom: 0.6rem; }
+        .span-2 { grid-column: span 2; }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            background: #fcfdfe;
+            transition: all 0.2s;
+        }
+        input:focus { 
+            border-color: var(--accent-primary); 
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08); 
+        }
+
+        .form-footer {
+            margin-top: 3rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Action Menu */
+        .dropdown-btn { 
+            cursor: pointer; 
+            padding: 8px; 
+            border-radius: 8px; 
+            color: var(--text-muted);
+            transition: 0.2s;
+        }
+        .dropdown-btn:hover { background: #f1f5f9; color: var(--accent-primary); }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 110%;
+            background: #fff;
+            min-width: 160px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            z-index: 100;
+            padding: 0.5rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .dropdown-menu.show { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dropdown-item {
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .dropdown-item:hover { background: #f8fafc; color: var(--accent-primary); }
+        .dropdown-item.delete:hover { background: #fef2f2; color: var(--danger); }
+
+        /* Notifications */
+        #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
+        .toast {
+            background: #0f172a;
+            color: #fff;
+            padding: 1rem 1.8rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.8rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .search-box { width: 100%; }
+            .page-header { flex-direction: column; align-items: stretch; gap: 1.5rem; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Main Dashboard -->
+    <div id="dashboardView">
+        <header class="page-header">
+            <div class="header-left">
+                <h1>Teams</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <span class="search-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Search team or member...">
+                </div>
+                <button class="btn btn-primary" id="btnAddNew">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                    New Team
+                </button>
+            </div>
+        </header>
+
+        <div class="card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Team Members</th>
+                        <th>Company</th>
+                        <th style="width: 60px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="teamsTableBody">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+            <div id="emptyState" class="empty-state" style="display: none; padding: 6rem 2rem; text-align: center; color: var(--text-muted);">
+                <p>No results found for your search.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form View -->
+    <div id="formView" class="form-view">
+        <h2 id="formHeader" style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">Create New Team</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Organize your workforce and assign them to specific maintenance duties.</p>
+        <form id="teamForm">
+            <input type="hidden" id="editId" value="">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Team Name</label>
+                    <input type="text" id="teamName" placeholder="e.g. HVAC Specialists" required>
+                </div>
+                <div class="form-group">
+                    <label>Classification</label>
+                    <select id="teamType">
+                        <option value="Internal">Internal Team</option>
+                        <option value="External">External Vendor</option>
+                        <option value="Subcontractor">Subcontractor</option>
+                    </select>
+                </div>
+                <div class="form-group span-2">
+                    <label>Team Members (Comma Separated)</label>
+                    <input type="text" id="teamMembers" placeholder="Anas Makari, John Doe, Jane Smith..." required>
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <input type="text" id="company" value="My Company (San Francisco)" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Primary Work Center</label>
+                    <select id="workCenter">
+                        <option>Main Production Plant</option>
+                        <option>Regional Logistics Hub</option>
+                        <option>Support Center</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancel">Discard</button>
+                <button type="submit" class="btn btn-primary">Create Team</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+    const STORAGE_KEY = 'mms_teams_pro_data';
+    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#6366f1'];
+
+    let teamsData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+        { id: '1', name: "Internal Maintenance", type: "Internal", members: ["Anas Makari", "Marc Demo"], company: "My Company (San Francisco)" },
+        { id: '2', name: "Metrology Dept", type: "Internal", members: ["John Smith"], company: "My Company (San Francisco)" },
+        { id: '3', name: "Certified Subcontractor", type: "Subcontractor", members: ["Maggie Davidson", "Sara Lee"], company: "My Company (San Francisco)" }
+    ];
+
+    const tableBody = document.getElementById('teamsTableBody');
+    const dashboardView = document.getElementById('dashboardView');
+    const formView = document.getElementById('formView');
+    const teamForm = document.getElementById('teamForm');
+    const searchInput = document.getElementById('searchInput');
+    const emptyState = document.getElementById('emptyState');
+
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData)); }
+    function getInitials(name) { return name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2); }
+    function getColor(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return COLORS[Math.abs(hash) % COLORS.length];
+    }
+
+    function showToast(msg) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function render(search = '') {
+        tableBody.innerHTML = '';
+        const filtered = teamsData.filter(t => 
+            t.name.toLowerCase().includes(search.toLowerCase()) || 
+            t.members.some(m => m.toLowerCase().includes(search.toLowerCase()))
+        );
+
+        emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+
+        filtered.forEach(team => {
+            const row = document.createElement('tr');
+            
+            let avatarsHtml = '<div class="avatar-group">';
+            team.members.slice(0, 3).forEach(m => {
+                avatarsHtml += `<div class="avatar" style="background:${getColor(m)}" title="${m}">${getInitials(m)}</div>`;
+            });
+            if (team.members.length > 3) {
+                avatarsHtml += `<div class="avatar" style="background:#f1f5f9; color:#64748b">+${team.members.length - 3}</div>`;
+            }
+            avatarsHtml += `<span style="margin-left:14px; font-weight:600; font-size:0.85rem">${team.members[0]}${team.members.length > 1 ? ', ...' : ''}</span></div>`;
+
+            row.innerHTML = `
+                <td>
+                    <span class="team-name">${team.name}</span>
+                    <span class="badge badge-${team.type.toLowerCase()}">${team.type}</span>
+                </td>
+                <td>${avatarsHtml}</td>
+                <td style="color:var(--text-muted); font-weight:500;">${team.company}</td>
+                <td>
+                    <div class="dropdown" style="position:relative">
+                        <div class="dropdown-btn" onclick="handleMenu(event, '${team.id}')">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
+                        </div>
+                        <div class="dropdown-menu" id="menu-${team.id}">
+                            <div class="dropdown-item" onclick="initEdit('${team.id}')">Edit Properties</div>
+                            <div class="dropdown-item delete" onclick="deleteItem('${team.id}')">Delete Team</div>
+                        </div>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    window.handleMenu = (e, id) => {
+        e.stopPropagation();
+        document.querySelectorAll('.dropdown-menu').forEach(m => { if (m.id !== `menu-${id}`) m.classList.remove('show'); });
+        document.getElementById(`menu-${id}`).classList.toggle('show');
+    };
+
+    window.deleteItem = (id) => {
+        teamsData = teamsData.filter(t => t.id !== id);
+        save(); render(); showToast('Team removed from database');
+    };
+
+    window.initEdit = (id) => {
+        const team = teamsData.find(t => t.id === id);
+        document.getElementById('editId').value = team.id;
+        document.getElementById('teamName').value = team.name;
+        document.getElementById('teamType').value = team.type;
+        document.getElementById('teamMembers').value = team.members.join(', ');
+        document.getElementById('formHeader').innerText = 'Update Team Info';
+        dashboardView.style.display = 'none';
+        formView.style.display = 'block';
+    };
+
+    document.getElementById('btnAddNew').onclick = () => {
+        teamForm.reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('formHeader').innerText = 'Create New Team';
+        dashboardView.style.display = 'none';
+        formView.style.display = 'block';
+    };
+
+    document.getElementById('btnCancel').onclick = () => {
+        dashboardView.style.display = 'block';
+        formView.style.display = 'none';
+    };
+
+    teamForm.onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const name = document.getElementById('teamName').value;
+        const type = document.getElementById('teamType').value;
+        const members = document.getElementById('teamMembers').value.split(',').map(m => m.trim()).filter(m => m);
+
+        if (id) {
+            const idx = teamsData.findIndex(t => t.id === id);
+            teamsData[idx] = { ...teamsData[idx], name, type, members };
+            showToast('Changes applied successfully');
+        } else {
+            teamsData.unshift({ id: Date.now().toString(), name, type, members, company: "My Company (San Francisco)" });
+            showToast('New team created');
+        }
+
+        save(); render();
+        dashboardView.style.display = 'block';
+        formView.style.display = 'none';
+    };
+
+    searchInput.oninput = (e) => render(e.target.value);
+    document.addEventListener('click', () => document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show')));
+
+    render();
+</script>
+
+</body>
+</html>

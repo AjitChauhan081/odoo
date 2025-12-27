@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Maintenance Management System - Production</title>
+    <style>
+        :root {
+            --bg-color: #f1f5f9; 
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-color: #2563eb;
+            --accent-soft: #eff6ff;
+            
+            --status-new: #94a3b8;
+            --status-progress: #3b82f6;
+            --status-repaired: #10b981;
+            --status-scrap: #ef4444;
+            
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#cbd5e1 0.8px, transparent 0.8px);
+            background-size: 24px 24px;
+            color: var(--text-primary);
+            padding: 40px 24px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* --- Header & Breadcrumbs --- */
+        .breadcrumbs {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex; gap: 8px; align-items: center;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 { 
+            font-size: 28px; 
+            font-weight: 800; 
+            letter-spacing: -0.03em; 
+            color: #1e293b;
+        }
+
+        /* --- Advanced Status Flow --- */
+        .status-flow {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            gap: 2px;
+        }
+
+        .status-pill {
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .status-pill.active[data-status="new"] { background: white; color: var(--status-new); box-shadow: var(--shadow-sm); }
+        .status-pill.active[data-status="in-progress"] { background: white; color: var(--status-progress); box-shadow: var(--shadow-sm); }
+        .status-pill.active[data-status="repaired"] { background: white; color: var(--status-repaired); box-shadow: var(--shadow-sm); }
+        .status-pill.active[data-status="scrap"] { background: white; color: var(--status-scrap); box-shadow: var(--shadow-sm); }
+
+        .status-pill .indicator { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; opacity: 0.5; }
+        .status-pill.active .indicator { opacity: 1; background: currentColor; }
+
+        /* --- Main Content Layout --- */
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 28px;
+        }
+
+        .main-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 40px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+
+        /* Lock Overlay */
+        .lock-badge {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            background: #fff1f2;
+            color: #e11d48;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border: 1px solid #ffe4e6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .is-locked .lock-badge { display: flex; align-items: center; gap: 6px; }
+        .is-locked input, .is-locked select, .is-locked textarea { 
+            background-color: #f8fafc; 
+            border-color: #f1f5f9;
+            pointer-events: none;
+            color: #94a3b8;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 32px;
+        }
+
+        /* --- Form Elements --- */
+        .subject-field {
+            font-size: 26px !important;
+            font-weight: 700;
+            border: none !important;
+            padding: 0 0 16px 0 !important;
+            margin-bottom: 32px;
+            border-bottom: 2px solid #f1f5f9 !important;
+            border-radius: 0 !important;
+            width: 100%;
+            color: #1e293b;
+        }
+
+        .input-group { margin-bottom: 24px; position: relative; }
+        label { display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            color: #334155;
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--accent-color); 
+            box-shadow: 0 0 0 4px var(--accent-soft); 
+        }
+
+        .error-state { border-color: #ef4444 !important; }
+        .error-msg { color: #ef4444; font-size: 10px; font-weight: 600; margin-top: 4px; display: none; }
+        .error-state + .error-msg { display: block; }
+
+        /* --- Sidebar --- */
+        .sidebar { display: flex; flex-direction: column; gap: 28px; }
+        .sidebar-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar-card h3 { font-size: 14px; font-weight: 800; margin-bottom: 20px; color: #1e293b; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .sidebar-card h3::before { content: ''; width: 4px; height: 14px; background: var(--accent-color); border-radius: 2px; }
+
+        .timeline { position: relative; padding-left: 24px; max-height: 450px; overflow-y: auto; }
+        .timeline::before { content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 2px; background: #f1f5f9; }
+        
+        .timeline-item { position: relative; margin-bottom: 24px; font-size: 13px; }
+        .timeline-item::before { content: ''; position: absolute; left: -24px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; border: 2px solid white; z-index: 2; }
+        .timeline-item.latest::before { background: var(--accent-color); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .timeline-msg { font-weight: 600; color: #475569; }
+        .timeline-date { color: var(--text-secondary); font-size: 11px; margin-top: 2px; }
+
+        /* --- Actions --- */
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn { 
+            padding: 12px 24px; 
+            border-radius: var(--radius-sm); 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        .btn-secondary { background: #f8fafc; color: var(--text-secondary); border-color: var(--border-color); }
+        .btn-primary { background: var(--accent-color); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+        .btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
+
+        .toast {
+            position: fixed; bottom: 32px; right: 32px; background: #0f172a; color: white; padding: 14px 28px; 
+            border-radius: 12px; font-size: 13px; font-weight: 600; transform: translateY(200%); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 1000;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .toast.show { transform: translateY(0); }
+
+        @media (max-width: 1024px) {
+            .content-layout { grid-template-columns: 1fr; }
+            body { padding: 20px; }
+        }
+
+        @media print {
+            .status-flow, .actions, .sidebar, .lock-badge { display: none !important; }
+            body { background: white; padding: 0; }
+            .main-card { box-shadow: none; border: none; padding: 0; }
+            .container { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <nav class="breadcrumbs">
+            <span>Engineering</span> 
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <span id="breadcrumb-id">REQ-9842</span>
+        </nav>
+
+        <header>
+            <div class="header-left">
+                <h1>Maintenance Request</h1>
+            </div>
+            <div class="header-right">
+                <div class="status-flow" id="status-container">
+                    <div class="status-pill active" data-status="new" onclick="handleStatusChange('new')">
+                        <span class="indicator"></span> New
+                    </div>
+                    <div class="status-pill" data-status="in-progress" onclick="handleStatusChange('in-progress')">
+                        <span class="indicator"></span> In Progress
+                    </div>
+                    <div class="status-pill" data-status="repaired" onclick="handleStatusChange('repaired')">
+                        <span class="indicator"></span> Repaired
+                    </div>
+                    <div class="status-pill" data-status="scrap" onclick="handleStatusChange('scrap')">
+                        <span class="indicator"></span> Scrap
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-layout">
+            <main class="main-card" id="form-container">
+                <div class="lock-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Locked / Finalized
+                </div>
+
+                <input type="text" id="field-subject" class="subject-field" placeholder="Brief Subject (e.g. Server A Overheating)">
+
+                <div class="section-grid">
+                    <div class="column">
+                        <div class="input-group">
+                            <label>Assigned To (Technician) *</label>
+                            <select id="field-technician">
+                                <option value="">-- Select Technician --</option>
+                                <option value="miller">David Miller (Sr. Engineer)</option>
+                                <option value="smith">Jordan Smith</option>
+                                <option value="rivera">Alex Rivera</option>
+                            </select>
+                            <span class="error-msg">Technician required for work assignment.</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Asset Category *</label>
+                            <select id="field-category">
+                                <option value="">-- Select Category --</option>
+                                <option value="it">Information Technology</option>
+                                <option value="facility">Facility & HVAC</option>
+                                <option value="prod">Production Machinery</option>
+                            </select>
+                            <span class="error-msg">Please select an asset category.</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Primary Asset *</label>
+                            <select id="field-equipment">
+                                <option value="">-- Select Asset --</option>
+                                <option value="srv-01">Rack Server #01</option>
+                                <option value="ac-02">Main AC Floor 2</option>
+                                <option value="lathe-05">Industrial Lathe L5</option>
+                            </select>
+                            <span class="error-msg">Specific equipment is required.</span>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="input-group">
+                            <label>Priority Level</label>
+                            <select id="field-priority">
+                                <option value="low">P3 - Low / Routine</option>
+                                <option value="med">P2 - Medium / Scheduled</option>
+                                <option value="high">P1 - High / Emergency</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Completion Deadline</label>
+                            <input type="datetime-local" id="field-deadline">
+                        </div>
+                        <div class="input-group">
+                            <label>Requester</label>
+                            <input type="text" id="field-requester" readonly value="Sarah Jenkins (Admin)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs-area">
+                    <label>Task Details & Resolution Instructions *</label>
+                    <textarea id="field-notes" rows="6" placeholder="Describe the problem or fix details..."></textarea>
+                    <span id="notes-error" class="error-msg" style="margin-top: 8px;">Resolution details are mandatory for finalization.</span>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" id="btn-discard" onclick="handleDiscard()">Discard Changes</button>
+                    <button class="btn btn-primary" id="btn-save" onclick="saveRecord()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save & Sync
+                    </button>
+                </div>
+            </main>
+
+            <aside class="sidebar">
+                <div class="sidebar-card">
+                    <h3>Metadata</h3>
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label>Registry ID</label>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; color: var(--accent-color); background: var(--accent-soft); padding: 6px 10px; border-radius: 6px; display: inline-block;">#REQ-2025-X04</div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 0;">
+                        <label>Created</label>
+                        <div style="font-size: 13px; font-weight: 500;">Dec 27, 2025 • 09:12 AM</div>
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 20px; font-size: 12px; padding: 8px;" onclick="window.print()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print Document
+                    </button>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>Audit Trail</h3>
+                    <div class="timeline" id="activity-timeline">
+                        <!-- Dynamic Logs -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toast-text">System Updated</span>
+    </div>
+
+    <script>
+        const INITIAL_DATA = {
+            subject: "Server Rack Fan Replacement",
+            technician: "",
+            category: "it",
+            equipment: "srv-01",
+            priority: "med",
+            deadline: "2025-12-30T12:00",
+            notes: "Fan #3 in Rack B is making grinding noise. Replacement part ordered.",
+            status: "new",
+            logs: [{ msg: "Request initialized in portal", time: "Dec 27, 09:12 AM" }]
+        };
+
+        let activeState = {...INITIAL_DATA};
+
+        window.onload = () => {
+            const saved = localStorage.getItem('erp_maint_v2');
+            if(saved) activeState = JSON.parse(saved);
+            syncUI();
+        };
+
+        function syncUI() {
+            document.getElementById('field-subject').value = activeState.subject;
+            document.getElementById('field-technician').value = activeState.technician;
+            document.getElementById('field-category').value = activeState.category;
+            document.getElementById('field-equipment').value = activeState.equipment;
+            document.getElementById('field-priority').value = activeState.priority;
+            document.getElementById('field-deadline').value = activeState.deadline;
+            document.getElementById('field-notes').value = activeState.notes;
+            
+            updateLockStatus(activeState.status);
+            updatePills(activeState.status);
+            refreshLog();
+        }
+
+        function handleStatusChange(targetStatus) {
+            // Business Rule 1: Prevent changing locked status unless re-opened
+            if (activeState.status === 'repaired' || activeState.status === 'scrap') {
+                showToast("Record is locked. Re-open to modify status.");
+                return;
+            }
+
+            // Business Rule 2: Cannot go to 'In Progress' without a tech
+            if (targetStatus === 'in-progress' && !document.getElementById('field-technician').value) {
+                document.getElementById('field-technician').classList.add('error-state');
+                showToast("Technician must be assigned first");
+                return;
+            }
+
+            // Business Rule 3: Cannot finalize without notes
+            if ((targetStatus === 'repaired' || targetStatus === 'scrap') && !document.getElementById('field-notes').value.trim()) {
+                document.getElementById('field-notes').classList.add('error-state');
+                showToast("Please provide resolution details");
+                return;
+            }
+
+            const old = activeState.status;
+            activeState.status = targetStatus;
+            
+            logEvent(`Status: ${old.toUpperCase()} ⮕ ${targetStatus.toUpperCase()}`);
+            saveRecord(true);
+            syncUI();
+        }
+
+        function updateLockStatus(status) {
+            const container = document.getElementById('form-container');
+            const saveBtn = document.getElementById('btn-save');
+            const discardBtn = document.getElementById('btn-discard');
+            const isFinal = (status === 'repaired' || status === 'scrap');
+
+            if (isFinal) {
+                container.classList.add('is-locked');
+                saveBtn.disabled = true;
+                discardBtn.innerText = "Re-Open Request";
+                discardBtn.classList.remove('btn-secondary');
+                discardBtn.classList.add('btn-primary');
+            } else {
+                container.classList.remove('is-locked');
+                saveBtn.disabled = false;
+                discardBtn.innerText = "Discard Changes";
+                discardBtn.classList.add('btn-secondary');
+                discardBtn.classList.remove('btn-primary');
+            }
+        }
+
+        function updatePills(status) {
+            document.querySelectorAll('.status-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.status === status);
+            });
+        }
+
+        function logEvent(msg) {
+            const now = new Date();
+            const ts = now.toLocaleDateString([], {month:'short', day:'numeric'}) + ", " + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            activeState.logs.unshift({ msg, time: ts });
+        }
+
+        function refreshLog() {
+            const el = document.getElementById('activity-timeline');
+            el.innerHTML = activeState.logs.map((l, i) => `
+                <div class="timeline-item ${i === 0 ? 'latest' : ''}">
+                    <div class="timeline-msg">${l.msg}</div>
+                    <div class="timeline-date">${l.time}</div>
+                </div>
+            `).join('');
+        }
+
+        function validateForm() {
+            const fields = ['field-subject', 'field-category', 'field-equipment'];
+            let valid = true;
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                if (!el.value.trim()) {
+                    el.classList.add('error-state');
+                    valid = false;
+                } else {
+                    el.classList.remove('error-state');
+                }
+            });
+            return valid;
+        }
+
+        function saveRecord(isAuto = false) {
+            if (!validateForm()) {
+                showToast("Required fields are missing");
+                return;
+            }
+
+            activeState.subject = document.getElementById('field-subject').value;
+            activeState.technician = document.getElementById('field-technician').value;
+            activeState.category = document.getElementById('field-category').value;
+            activeState.equipment = document.getElementById('field-equipment').value;
+            activeState.priority = document.getElementById('field-priority').value;
+            activeState.deadline = document.getElementById('field-deadline').value;
+            activeState.notes = document.getElementById('field-notes').value;
+
+            if (!isAuto) logEvent("Data manually synced");
+
+            localStorage.setItem('erp_maint_v2', JSON.stringify(activeState));
+            showToast(isAuto ? "Status updated" : "Sync successful");
+            syncUI();
+        }
+
+        function handleDiscard() {
+            if (activeState.status === 'repaired' || activeState.status === 'scrap') {
+                if (confirm("Unlock this request for editing? This will reset status to 'In Progress'.")) {
+                    activeState.status = 'in-progress';
+                    logEvent("Record unlocked by Admin");
+                    saveRecord(true);
+                }
+                return;
+            }
+
+            if(confirm("Revert all unsaved changes to last sync?")) {
+                const saved = localStorage.getItem('erp_maint_v2');
+                activeState = saved ? JSON.parse(saved) : {...INITIAL_DATA};
+                syncUI();
+                showToast("Changes reverted");
+            }
+        }
+
+        function showToast(txt) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = txt;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Live reset errors
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', () => el.classList.remove('error-state'));
+        });
+    </script>
+</body>
+</html>
