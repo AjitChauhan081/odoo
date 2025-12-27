@@ -26,7 +26,7 @@ The frontend consists of the following HTML files:
 - `Workcenter.html`  
   Workcenter and maintenance operations view  
   
-  *(UI created by Manthon, API integration added by us)*
+  *(Frontend by Manthon, API integration added by us)*
 
 ---
 
@@ -73,7 +73,7 @@ is fetched from the backend APIs.
 
 ## 👥 Contribution Note
 
-- **UI Design**: Created by **Manthan Vinzuda**
+- **Frontend**: Created by **Manthan Vinzuda**
 - **Backend** : Created by **Ajit Chauhan** & **Utsav Laheru**
 - **API Integration & Backend Connection**: Added by our team
 
